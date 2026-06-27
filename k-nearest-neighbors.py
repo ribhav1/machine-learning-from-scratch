@@ -3,12 +3,23 @@ import matplotlib.pylab as plt
 from sklearn import datasets
 
 # create dummy data with clusters using sklearn
-X, Y = datasets.make_blobs( n_samples=200, n_features=2, centers=3)
+#X, Y = datasets.make_blobs(n_samples=200, n_features=2, centers=3)
+
+# different dummy data shapes to test model 
+X, Y = datasets.make_moons(n_samples = 200, noise=0.2)
+#X, Y = datasets.make_circles(n_samples=200, noise=0.11, factor=0.45)
 
 # split data into train and test sets
 split_index = int(len(X) * 0.6)
 X_train, X_test = X[:split_index], X[split_index:]
 Y_train, Y_test = Y[:split_index], Y[split_index:]
+
+# Standardize features using the training set's mean and standard deviation.
+X_train_mean = X_train.mean(axis=0)
+X_train_std = X_train.std(axis=0)
+
+X_train = (X_train - X_train_mean) / X_train_std
+X_test = (X_test - X_train_mean) / X_train_std
 
 # predict the class of a sample using the k-nearest neighbors algorithm
 def predict(X: np.array, X_train: np.array, Y_train, k: int) -> int:
