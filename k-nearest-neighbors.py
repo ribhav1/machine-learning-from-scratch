@@ -22,27 +22,17 @@ X_train = (X_train - X_train_mean) / X_train_std
 X_test = (X_test - X_train_mean) / X_train_std
 
 # predict the class of a sample using the k-nearest neighbors algorithm
-def predict(X: np.array, X_train: np.array, Y_train, k: int) -> int:
-    # store distance of test sample to every other sample in training set
-    distances = []
-
-    # compute distances for every point in training set
-    for x in X_train:
-        # compute the squared distance for each feature
-        feature_dists = []
-        for ith_feature in range(len(x)):
-            feature_dists.append(np.square(X[ith_feature] - x[ith_feature]))
-
-        # add up all the squared feature distances and square root that sum to get the euclidean distance
-        distances.append(np.sqrt(np.sum(feature_dists)))
+def predict(test_sample: np.array, X_train: np.array, Y_train: np.array, k: int) -> int:
+    # vectorized calculation to record distance of test sample to every other sample in training set
+    distances = np.linalg.norm(X_train - test_sample, axis=1)
 
     # gets the indices of the k closest training samples
     # argsort returns the indices of the distances sorted in ascending order
     # so taking the first k indices gives the nearest neighbors.
-    nearent_neighbor_indices = np.argsort(distances)[:k]
+    nearest_neighbor_indices = np.argsort(distances)[:k]
 
     # use those indices to retrieve the corresponding class labels
-    classes = [Y_train[index] for index in nearent_neighbor_indices]
+    classes = [Y_train[index] for index in nearest_neighbor_indices]
 
     # Predict the class by majority vote,
     # np.bincount(classes) counts occurrences of each class label.
@@ -50,21 +40,27 @@ def predict(X: np.array, X_train: np.array, Y_train, k: int) -> int:
     class_pred = np.argmax(np.bincount(classes))
     return class_pred
 
+def predict_all(X_test: np.array, X_train: np.array, Y_train: np.array, k: int) -> np.array:
+    # record predictions for test data
+    class_preds = []
+    for test_sample in X_test:
+        class_preds.append(predict(test_sample, X_train, Y_train, k))
+
+    return class_preds
+
 # return a score between 0-1 representing the 
 # fraction of points for which the model correctly identified the class of the inputted data
-def get_accuracy(prediction: np.array, Y_test: np.array) -> int:
+def get_accuracy(Y_test: np.array, class_preds: np.array):
     correct = 0
     for i in range(len(Y_test)):
-        if prediction[i] == Y_test[i]:
+        if class_preds[i] == Y_test[i]:
             correct += 1
     return correct / len(Y_test)
 
-# store predictions for test data
-class_preds = []
-for sample in X_test:
-    class_preds.append(predict(sample, X_train, Y_train, 3))
+class_preds = predict_all(X_test, X_train, Y_train, 3)
+accuracy = get_accuracy(Y_test, class_preds)
 
-print("Accuracy: " + str(get_accuracy(np.array(class_preds), Y_test)))
+print("Accuracy: " + str(accuracy))
 
 # determine the plotting bounds for the decision boundary visualization
 x_min, x_max = X_train[:, 0].min() - 1, X_train[:, 0].max() + 1
